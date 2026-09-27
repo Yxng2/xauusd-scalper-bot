@@ -1,1 +1,40 @@
-
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>XAUUSD Scalper</title>
+<style>
+body{margin:0;background:#0a0f1d;color:#edf2ff;font:15px system-ui}main{max-width:1000px;margin:auto;padding:20px}
+.card{background:#121a2b;border:1px solid #26324b;border-radius:14px;padding:16px;margin:12px 0}
+h1{margin:0 0 5px}.muted{color:#8996b2}.row{display:flex;gap:12px;flex-wrap:wrap}.box{flex:1;min-width:180px}
+.value{font-size:25px;font-weight:700;margin-top:5px}.green{color:#36d17c}.red{color:#ff687d}
+button{border:0;border-radius:9px;padding:11px 15px;background:#256be8;color:white;font-weight:600}button.stop{background:#70283a}
+pre{white-space:pre-wrap;word-break:break-word}
+</style></head>
+<body><main>
+<h1>XAUUSD Scalper</h1><div class="muted">Demo/Paper execution • 5M bias + 1M sweep/reclaim</div>
+<div class="card row">
+<div class="box"><div class="muted">Gold price</div><div id="price" class="value">—</div></div>
+<div class="box"><div class="muted">Bias</div><div id="bias" class="value">—</div></div>
+<div class="box"><div class="muted">Signal</div><div id="signal" class="value">WAIT</div></div>
+<div class="box"><div class="muted">Bot</div><div id="bot" class="value">OFF</div></div>
+</div>
+<div class="card">
+<button onclick="setBot(true)">START DEMO BOT</button>
+<button class="stop" onclick="setBot(false)">STOP BOT</button>
+<button onclick="paper()">TEST PAPER ENTRY</button>
+</div>
+<div class="card"><h2>Last setup</h2><pre id="detail">Waiting...</pre></div>
+<div class="card"><h2>Safety</h2><div class="muted">This build does not send a real order. Broker credentials stay on the backend, never in this page.</div></div>
+<script>
+const api=(p,o)=>fetch(p,o).then(r=>r.json());
+async function refresh(){
+ const x=await api('/scan'); const s=x.signal;
+ $('price').textContent=x.price.bid.toFixed(2)+' / '+x.price.ask.toFixed(2);
+ $('bias').textContent=s?s.bias:'—'; $('signal').textContent=s?s.side:'WAIT';
+ $('signal').className='value '+(s?(s.side==='BUY'?'green':'red'):'');
+ $('detail').textContent=s?JSON.stringify(s,null,2):'No valid setup. Waiting for the next one.';
+ const st=await api('/state'); $('bot').textContent=st.enabled?'ON':'OFF';
+}
+async function setBot(v){await api('/bot',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({enabled:v})});refresh()}
+async function paper(){const r=await api('/paper-order',{method:'POST'});$('detail').textContent=JSON.stringify(r,null,2);refresh()}
+const $=id=>document.getElementById(id); refresh(); setInterval(refresh,5000);
+</script></main></body></html>
